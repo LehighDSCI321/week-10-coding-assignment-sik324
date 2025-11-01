@@ -5,7 +5,7 @@ class SortableDigraph:
     def __init__(self):
         self.graph = {}
 
-    def add_node(self, v):
+    def add_node(self, v, value=None):
         """Add node if it doesn't exist."""
         if not isinstance(v, str):
             raise TypeError("Node must be a string.")
@@ -16,6 +16,10 @@ class SortableDigraph:
         """Add edge u → v."""
         self.add_node(u)
         self.add_node(v)
+        self.graph[u].add(v)
+
+        if self.path_exists(v, u):  # Check for cycles
+            raise ValueError(f"Adding edge {u} → {v} would create a cycle.")
         self.graph[u].add(v)
 
     def get_children(self, node):
@@ -90,6 +94,8 @@ class DAG(TraversableDigraph):
     def path_exists(self, start, target):
         """Check if there is a path from start to target using DFS."""
         G = self.graph
+        if start not in G:
+            return False
         visited = set()
         stack = [start]
         while stack:
@@ -98,5 +104,5 @@ class DAG(TraversableDigraph):
                 return True
             if node not in visited:
                 visited.add(node)
-                stack.extend(G[node])
+                stack.extend(G.get(node, []))
         return False
