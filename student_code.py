@@ -36,22 +36,22 @@ class SortableDigraph:
 
     def top_sort(self):
         """Perform topological sorting of the graph."""
-        G = self.graph
-        count = dict((u, 0) for u in G)
-        for u in G:
-            for v in G[u]:
+        graph = self.graph
+        count = dict((u, 0) for u in graph)
+        for u in graph:
+            for v in graph[u]:
                 count[v] += 1
 
-        Q = [u for u in G if count[u] == 0]
-        S = []
-        while Q:
-            u = Q.pop()
-            S.append(u)
-            for v in G[u]:
+        Queue = [u for u in graph if count[u] == 0]
+        Sorted_nodes = []
+        while Queue:
+            u = Queue.pop()
+            Sorted_nodes.append(u)
+            for v in graph[u]:
                 count[v] -= 1
                 if count[v] == 0:
-                    Q.append(v)
-        return S
+                    Queue.append(v)
+        return Sorted_nodes
 
     def __repr__(self):
         return f"{self.graph}"
