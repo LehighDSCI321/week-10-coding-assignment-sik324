@@ -7,13 +7,18 @@ class SortableDigraph:
     def __init__(self):
         self.graph = {}
 
+    def add_node(self, v):
+        """Add nodes to the created empty dict."""
+        if not isinstance(v, str):
+            raise TypeError(" must be a string.")
+        if v not in self._graph:
+            self._graph[v] = set()
+
     def add_edge(self, u, v):
-        """Add a directed edge from u to v."""
-        if u not in self.graph:
-            self.graph[u] = set()
-        if v not in self.graph:
-            self.graph[v] = set()
-        self.graph[u].add(v)
+        """Add edges to the graph."""
+        self.add_node(u)
+        self.add_node(v)
+        self._graph[u].add(v)
 
     def get_children(self, node):
         """Return children of a node."""
@@ -55,7 +60,7 @@ class TraversleDigraph(SortableDigraph):
 
 
 class DAG(TraversleDigraph):
-    def add_edge(self, u, v):
+    def add_node(self, u, v):
         """Add edge between u to v if it is does'nt create a cycle."""
         if self.path_exists(v, u):
             raise ValueError(f"Adding edge{u} to {v} would create a cycle.")
