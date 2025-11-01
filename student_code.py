@@ -10,37 +10,38 @@ class SortableDigraph:
         if not isinstance(v, str):
             raise TypeError("Node must be a string.")
         if v not in self.graph:
-            self.graph[v] = set()
+            self.graph[v] = {}
 
-    def add_edge(self, u, v):
-        """Add edge u → v."""
+    def get_nodes(self):
+        """Return all nodes in the graph."""
+        return list(self.graph.keys())
+
+    def add_edge(self, u, v, edge_weight=None):
+        """Add edge u → v with optional weight."""
         self.add_node(u)
         self.add_node(v)
-        self.graph[u].add(v)
-
-        if self.path_exists(v, u):  # Check for cycles
-            raise ValueError(f"Adding edge {u} → {v} would create a cycle.")
-        self.graph[u].add(v)
+        self.graph[u][v] = edge_weight
 
     def get_children(self, node):
         """Return children of a node."""
-        return self.graph.get(node, set())
+        return list(self.graph.get(node, {}).keys())
 
     def successors(self, node):
         """Return all nodes directly reachable from the given node."""
-        return self.graph.get(node, set())
+        return sorted(list(self.graph.get(node, {}).keys()))
 
     def predecessors(self, node):
         """Return all nodes that have edges leading to the given node."""
-        return {u for u, nbrs in self.graph.items() if node in nbrs}
+        return sorted([u for u, nbrs in self.graph.items() if node in nbrs])
 
     def top_sort(self):
         """Perform topological sorting of the graph."""
-        G = self.graph  # Use inherited graph
+        G = self.graph
         count = dict((u, 0) for u in G)
         for u in G:
             for v in G[u]:
                 count[v] += 1
+
         Q = [u for u in G if count[u] == 0]
         S = []
         while Q:
@@ -67,7 +68,7 @@ class TraversableDigraph(SortableDigraph):
                 continue
             S.add(u)
             yield u
-            Q.extend(G[u])
+            Q.extend(G[u].keys())
 
     def bfs(self, start):
         """Breadth-First Search traversal using deque."""
@@ -80,16 +81,17 @@ class TraversableDigraph(SortableDigraph):
                 continue
             S.add(u)
             yield u
-            for v in G[u]:
+            for v in G[u].keys():
                 Q.append(v)
 
 
 class DAG(TraversableDigraph):
-    def add_edge(self, u, v):
+    def add_edge(self, u, v, edge_weight=None):
         """Add edge u → v only if it doesn’t create a cycle."""
+        # check cycle BEFORE adding
         if self.path_exists(v, u):
             raise ValueError(f"Adding edge {u} → {v} would create a cycle.")
-        super().add_edge(u, v)
+        super().add_edge(u, v, edge_weight=edge_weight)
 
     def path_exists(self, start, target):
         """Check if there is a path from start to target using DFS."""
@@ -104,5 +106,5 @@ class DAG(TraversableDigraph):
                 return True
             if node not in visited:
                 visited.add(node)
-                stack.extend(G.get(node, []))
+                stack.extend(G.get(node, {}).keys())
         return False
