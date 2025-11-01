@@ -1,5 +1,7 @@
 from collections import deque
 
+"""TraversalDigraph, which inherits from SortableDigraph and DAG which inherits from TraversalDigraph."""
+
 
 class SortableDigraph:
     """A directed graph with sortable and traversal functionality."""
@@ -8,7 +10,7 @@ class SortableDigraph:
         """Initialize an empty directed graph."""
         self.graph = {}
 
-    def add_node(self, node_name):
+    def add_node(self, node_name, value=None):
         """Add a node if it doesn't exist."""
         if not isinstance(node_name, str):
             raise TypeError("Node name must be a string.")
@@ -56,6 +58,8 @@ class SortableDigraph:
                 in_degree[neighbor] -= 1
                 if in_degree[neighbor] == 0:
                     queue.append(neighbor)
+        if len(sorted_nodes) != len(self.graph):
+            raise ValueError("Graph contains a cycle or disconnected components.")
         return sorted_nodes
 
     def __repr__(self):
@@ -66,10 +70,11 @@ class SortableDigraph:
 class TraversableDigraph(SortableDigraph):
     """A digraph that supports traversal algorithms."""
 
-    def dfs(self, start_node):
+    def dfs(self, start):
         """Depth-First Search traversal."""
-        visited = set()
-        stack = [start_node]
+        graph = self.graph
+        visited = set([start])
+        stack = sorted(graph[start].keys(), reverse=True)
 
         while stack:
             node = stack.pop()
@@ -77,12 +82,14 @@ class TraversableDigraph(SortableDigraph):
                 continue
             visited.add(node)
             yield node
-            stack.extend(self.graph[node].keys())
+            for neighbor in sorted(graph[node].keys(), reverse=True):
+                stack.append(neighbor)
 
-    def bfs(self, start_node):
+    def bfs(self, start):
         """Breadth-First Search traversal using deque."""
-        visited = set()
-        queue = deque([start_node])
+        visited = set([start])
+        queue = deque(self.graph[start].keys())
+        graph = self.graph
 
         while queue:
             node = queue.popleft()
@@ -90,7 +97,7 @@ class TraversableDigraph(SortableDigraph):
                 continue
             visited.add(node)
             yield node
-            for neighbor in self.graph[node].keys():
+            for neighbor in sorted(graph[node].keys()):
                 queue.append(neighbor)
 
 
