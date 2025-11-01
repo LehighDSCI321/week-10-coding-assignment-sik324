@@ -11,14 +11,14 @@ class SortableDigraph:
         """Add nodes to the created empty dict."""
         if not isinstance(v, str):
             raise TypeError(" must be a string.")
-        if v not in self._graph:
+        if v not in self.graph:
             self._graph[v] = set()
 
     def add_edge(self, u, v):
         """Add edges to the graph."""
         self.add_node(u)
         self.add_node(v)
-        self._graph[u].add(v)
+        self.graph[u].add(v)
 
     def get_children(self, node):
         """Return children of a node."""
@@ -78,4 +78,4 @@ class DAG(TraversleDigraph):
             if node not in visited:
                 visited.add(node)
                 stack.extend(G[node])
-        False
+        return False
