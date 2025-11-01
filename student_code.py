@@ -2,109 +2,122 @@ from collections import deque
 
 
 class SortableDigraph:
+    """A directed graph with sortable and traversal functionality."""
+
     def __init__(self):
+        """Initialize an empty directed graph."""
         self.graph = {}
 
-    def add_node(self, v, value=None):
-        """Add node if it doesn't exist."""
-        if not isinstance(v, str):
-            raise TypeError("Node must be a string.")
-        if v not in self.graph:
-            self.graph[v] = {}
+    def add_node(self, node_name):
+        """Add a node if it doesn't exist."""
+        if not isinstance(node_name, str):
+            raise TypeError("Node name must be a string.")
+        if node_name not in self.graph:
+            self.graph[node_name] = {}
 
     def get_nodes(self):
         """Return all nodes in the graph."""
         return list(self.graph.keys())
 
-    def add_edge(self, u, v, edge_weight=None):
-        """Add edge u → v with optional weight."""
-        self.add_node(u)
-        self.add_node(v)
-        self.graph[u][v] = edge_weight
+    def add_edge(self, source, target, edge_weight=None):
+        """Add a directed edge source → target with optional weight."""
+        self.add_node(source)
+        self.add_node(target)
+        self.graph[source][target] = edge_weight
 
-    def get_children(self, node):
+    def get_children(self, node_name):
         """Return children of a node."""
-        return list(self.graph.get(node, {}).keys())
+        return list(self.graph.get(node_name, {}).keys())
 
-    def successors(self, node):
+    def successors(self, node_name):
         """Return all nodes directly reachable from the given node."""
-        return sorted(list(self.graph.get(node, {}).keys()))
+        return sorted(list(self.graph.get(node_name, {}).keys()))
 
-    def predecessors(self, node):
+    def predecessors(self, node_name):
         """Return all nodes that have edges leading to the given node."""
-        return sorted([u for u, nbrs in self.graph.items() if node in nbrs])
+        return sorted(
+            [src for src, neighbors in self.graph.items() if node_name in neighbors]
+        )
 
     def top_sort(self):
         """Perform topological sorting of the graph."""
-        graph = self.graph
-        count = dict((u, 0) for u in graph)
-        for u in graph:
-            for v in graph[u]:
-                count[v] += 1
+        in_degree = {u: 0 for u in self.graph}
+        for _, neighbors in self.graph.items():
+            for vertex in neighbors:
+                in_degree[vertex] += 1
 
-        Queue = [u for u in graph if count[u] == 0]
-        Sorted_nodes = []
-        while Queue:
-            u = Queue.pop()
-            Sorted_nodes.append(u)
-            for v in graph[u]:
-                count[v] -= 1
-                if count[v] == 0:
-                    Queue.append(v)
-        return Sorted_nodes
+        queue = [u for u in self.graph if in_degree[u] == 0]
+        sorted_nodes = []
+
+        while queue:
+            node = queue.pop()
+            sorted_nodes.append(node)
+            for neighbor in self.graph[node]:
+                in_degree[neighbor] -= 1
+                if in_degree[neighbor] == 0:
+                    queue.append(neighbor)
+        return sorted_nodes
 
     def __repr__(self):
+        """Return string representation of the graph."""
         return f"{self.graph}"
 
 
 class TraversableDigraph(SortableDigraph):
-    def dfs(self, s):
-        """Depth-First Search traversal."""
-        G = self.graph
-        S, Q = set(), [s]
-        while Q:
-            u = Q.pop()
-            if u in S:
-                continue
-            S.add(u)
-            yield u
-            Q.extend(G[u].keys())
+    """A digraph that supports traversal algorithms."""
 
-    def bfs(self, start):
-        """Breadth-First Search traversal using deque."""
-        G = self.graph
-        S = set()
-        Q = deque([start])
-        while Q:
-            u = Q.popleft()
-            if u in S:
+    def dfs(self, start_node):
+        """Depth-First Search traversal."""
+        visited = set()
+        stack = [start_node]
+
+        while stack:
+            node = stack.pop()
+            if node in visited:
                 continue
-            S.add(u)
-            yield u
-            for v in G[u].keys():
-                Q.append(v)
+            visited.add(node)
+            yield node
+            stack.extend(self.graph[node].keys())
+
+    def bfs(self, start_node):
+        """Breadth-First Search traversal using deque."""
+        visited = set()
+        queue = deque([start_node])
+
+        while queue:
+            node = queue.popleft()
+            if node in visited:
+                continue
+            visited.add(node)
+            yield node
+            for neighbor in self.graph[node].keys():
+                queue.append(neighbor)
 
 
 class DAG(TraversableDigraph):
-    def add_edge(self, u, v, edge_weight=None):
-        """Add edge u → v only if it doesn’t create a cycle."""
-        # check cycle BEFORE adding
-        if self.path_exists(v, u):
-            raise ValueError(f"Adding edge {u} → {v} would create a cycle.")
-        super().add_edge(u, v, edge_weight=edge_weight)
+    """A Directed Acyclic Graph that prevents cycle creation."""
 
-    def path_exists(self, start, target):
-        """Check if there is a path from start to target using DFS."""
-        G = self.graph
-        if start not in G:
+    def add_edge(self, source, target, edge_weight=None):
+        """Add edge source → target only if it doesn’t create a cycle."""
+        if self.path_exists(target, source):
+            raise ValueError(
+                f"Adding edge {source} → {target} would create a cycle."
+            )
+        super().add_edge(source, target, edge_weight=edge_weight)
+
+    def path_exists(self, start_node, target_node):
+        """Check if there is a path from start_node to target_node using DFS."""
+        if start_node not in self.graph:
             return False
+
         visited = set()
-        stack = [start]
+        stack = [start_node]
+
         while stack:
             node = stack.pop()
-            if node == target:
+            if node == target_node:
                 return True
             if node not in visited:
                 visited.add(node)
-                stack.extend(G.get(node, {}).keys())
+                stack.extend(self.graph.get(node, {}).keys())
         return False
